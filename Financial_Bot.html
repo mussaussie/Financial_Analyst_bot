@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Chatbot Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chat-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .example-queries {
+            margin-top: 30px;
+        }
+        .example-query {
+            background-color: #f0f0f0;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .example-query:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Financial Chatbot Tester</h1>
+    
+    <div class="chat-container">
+        <div class="input-container">
+            <input type="text" id="queryInput" placeholder="Enter your financial query here...">
+            <button onclick="sendQuery()">Send</button>
+        </div>
+        <div id="responseContainer" class="response" style="display: none;">
+            <h3>Response:</h3>
+            <p id="responseText"></p>
+        </div>
+    </div>
+    
+    <div class="example-queries">
+        <h2>Example Queries</h2>
+        <p>Click on any example to try it:</p>
+        <div class="example-query" onclick="useExample(this)">What is the total revenue for Microsoft?</div>
+        <div class="example-query" onclick="useExample(this)">What is the net income for Apple?</div>
+        <div class="example-query" onclick="useExample(this)">What is the revenue growth for Tesla?</div>
+        <div class="example-query" onclick="useExample(this)">Compare net income between Apple and Microsoft.</div>
+        <div class="example-query" onclick="useExample(this)">What is the net income change for Tesla?</div>
+    </div>
+
+    <script>
+        function sendQuery() {
+            const query = document.getElementById('queryInput').value;
+            if (!query) return;
+            
+            fetch('http://127.0.0.1:5000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('responseText').textContent = data.response;
+                document.getElementById('responseContainer').style.display = 'block';
+            })
+            .catch(error => {
+                document.getElementById('responseText').textContent = 
+                    'Error: Could not connect to the chatbot. Make sure your Flask server is running.';
+                document.getElementById('responseContainer').style.display = 'block';
+            });
+        }
+        
+        function useExample(element) {
+            document.getElementById('queryInput').value = element.textContent;
+            sendQuery();
+        }
+    </script>
+</body>
+</html>

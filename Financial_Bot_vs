@@ -1,0 +1,73 @@
+import pandas as pd
+from flask import Flask, request, jsonify
+from flask_cors import CORS  # Import the CORS extension
+
+# Load the financial data
+df = pd.read_excel('C:/Users/mussa/Downloads/financial_data_extracted.xlsx')
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)  # This enables CORS for all routes
+
+# --- Helper Functions ---
+def get_total_revenue(company, year):
+    data = df[(df['Company'] == company) & (df['Year'] == year)]
+    if not data.empty:
+        return f"The total revenue for {company} in {year} is {data['Total Revenue'].values[0]}."
+    return "Data not available."
+
+def get_net_income(company, year):
+    data = df[(df['Company'] == company) & (df['Year'] == year)]
+    if not data.empty:
+        return f"{company}'s net income in {year} is {data['Net Income'].values[0]}."
+    return "Data not available."
+
+def get_revenue_growth(company, year):
+    data = df[(df['Company'] == company) & (df['Year'] == year)]
+    if not data.empty:
+        return f"{company}'s revenue growth in {year} is {data['Revenue Growth (%)'].values[0]}%."
+    return "Data not available."
+
+def compare_net_income(company1, company2, year):
+    data1 = df[(df['Company'] == company1) & (df['Year'] == year)]
+    data2 = df[(df['Company'] == company2) & (df['Year'] == year)]
+    if not data1.empty and not data2.empty:
+        income1 = data1['Net Income'].values[0]
+        income2 = data2['Net Income'].values[0]
+        return f"In {year}, {company1}'s net income was {income1}, while {company2}'s was {income2}."
+    return "Comparison data not available."
+
+# --- Chat Endpoint ---
+@app.route('/chat', methods=['POST'])
+def chat():
+    query = request.json['query']
+    
+    # Simple hardcoded matching
+    if "total revenue" in query.lower() and "microsoft" in query.lower():
+        return jsonify({'response': get_total_revenue("Microsoft", 2023)})
+    
+    elif "net income" in query.lower() and "apple" in query.lower():
+        return jsonify({'response': get_net_income("Apple", 2023)})
+    elif "revenue growth" in query.lower() and "tesla" in query.lower():
+        return jsonify({'response': get_revenue_growth("Tesla", 2023)})
+    elif "compare" in query.lower() and "net income" in query.lower():
+        return jsonify({'response': compare_net_income("Apple", "Microsoft", 2023)})
+    elif "net income change" in query.lower() and "tesla" in query.lower():
+        current = df[(df['Company'] == "Tesla") & (df['Year'] == 2023)]
+        previous = df[(df['Company'] == "Tesla") & (df['Year'] == 2022)]
+        if not current.empty and not previous.empty:
+            change = ((current['Net Income'].values[0] - previous['Net Income'].values[0]) /
+                      previous['Net Income'].values[0]) * 100
+            return jsonify({'response': f"Tesla's net income changed by {change:.2f}% from 2022 to 2023."})
+        return jsonify({'response': "Data not available."})
+    else:
+        return jsonify({'response': "Sorry, I can only respond to predefined queries."})
+
+# Add a simple test endpoint
+@app.route('/ping', methods=['GET'])
+def ping():
+    return jsonify({'status': 'ok', 'message': 'Financial chatbot is running'})
+
+# --- Run the App ---
+if __name__ == '__main__':
+    app.run(debug=True)
